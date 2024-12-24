@@ -1,11 +1,13 @@
 package vis.backend.demo.user.service;
 
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import vis.backend.demo.global.api_payload.ErrorCode;
 import vis.backend.demo.global.exception.GeneralException;
+import vis.backend.demo.global.utils.Constants;
 import vis.backend.demo.user.converter.UserConverter;
 import vis.backend.demo.user.domain.RoleType;
 import vis.backend.demo.user.domain.User;
@@ -20,12 +22,12 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public void register(UserSimpleReqDto userReqDto) {
-        // 이미 존재하는 유저인지 확인
         if (userRepository.findByEmail(userReqDto.getEmail()).isPresent()) {
             throw new GeneralException(ErrorCode.USER_ALREADY_REGISTERED);
         }
 
-        // 비밀번호 암호화
+        checkEmail(userReqDto.getEmail());
+
         String encodedPassword = passwordEncoder.encode(userReqDto.getPassword());
 
         User user = UserConverter.toUser(userReqDto.getEmail(), encodedPassword);
@@ -42,6 +44,16 @@ public class UserService {
     public RoleType getRoleType(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorCode.BAD_REQUEST));
         return user.getRole();
+    }
+
+    private void checkEmail(String email) {
+        Pattern emailPattern = Pattern.compile(Constants.EMAIL_REGEX);
+        if (!emailPattern.matcher(email).matches()) {
+            throw new GeneralException(ErrorCode.WRONG_EMAIL_FORMAT);
+        }
+        if (userRepository.existsByEmail(email)) {
+            throw new GeneralException(ErrorCode.ALREADY_EXISTED_EMAIL);
+        }
     }
 
 }
