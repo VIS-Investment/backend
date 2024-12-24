@@ -43,12 +43,7 @@ public class UserController {
     })
     @PostMapping("/login")
     public ApiResponse<String> login(@RequestBody UserSimpleReqDto userReqDto, HttpServletRequest request) {
-        User user = userService.authenticate(userReqDto.getEmail(), userReqDto.getPassword());
-
-        request.getSession().invalidate(); // 세션을 생성하기 전에 기존의 세션 파기
-        HttpSession session = request.getSession(true); // true: 세션이 없으면 새로 생성
-        session.setAttribute("userEmail", user.getEmail()); // 생성된 세션은 클라이언트에 JSESSIONID 쿠키로 전달
-        session.setMaxInactiveInterval(60 * 30); // 30분 동안 비활성 상태가 지속되면 세션이 만료
+        User user = userService.login(userReqDto, request);
 
         return ApiResponse.onSuccess(SuccessCode.USER_LOGIN_SUCCESS, user.getEmail());
     }
@@ -59,10 +54,7 @@ public class UserController {
     })
     @DeleteMapping("/logout")
     public ApiResponse<String> logout(HttpServletRequest request) {
-        HttpSession session = request.getSession(false); // false: 세션이 없으면 null 반환
-        if (session != null) {
-            session.invalidate(); // session 속 모든 속성값 삭제
-        }
+        userService.logout(request);
         return ApiResponse.onSuccess(SuccessCode.USER_LOGOUT_SUCCESS, "로그아웃 성공");
     }
 

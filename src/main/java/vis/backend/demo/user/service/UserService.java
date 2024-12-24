@@ -42,8 +42,14 @@ public class UserService {
     public User login(UserSimpleReqDto userReqDto, HttpServletRequest request) {
         User user = authenticate(userReqDto.getEmail(), userReqDto.getPassword());
         setSession(user, request);
-
         return user;
+    }
+
+    public void logout(HttpServletRequest request) {
+        HttpSession session = request.getSession(false); // false: 세션이 없으면 null 반환
+        if (session != null) {
+            session.invalidate(); // session 속 모든 속성값 삭제
+        }
     }
 
     private void checkEmail(String email) {
@@ -67,7 +73,6 @@ public class UserService {
         return userRepository.findByEmail(email)
                 .filter(user -> passwordEncoder.matches(rawPassword, user.getPassword())) // 해싱 후 비교
                 .orElseThrow(() -> new GeneralException(ErrorCode.PASSWORD_MISMATCH));
-
     }
 
     private void setSession(User user, HttpServletRequest request) {
