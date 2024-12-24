@@ -9,7 +9,6 @@ import vis.backend.demo.global.api_payload.ErrorCode;
 import vis.backend.demo.global.exception.GeneralException;
 import vis.backend.demo.global.utils.Constants;
 import vis.backend.demo.user.converter.UserConverter;
-import vis.backend.demo.user.domain.RoleType;
 import vis.backend.demo.user.domain.User;
 import vis.backend.demo.user.dto.UserRequestDto.UserSimpleReqDto;
 import vis.backend.demo.user.repository.UserRepository;
@@ -31,7 +30,10 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(userReqDto.getPassword());
 
         User user = UserConverter.toUser(userReqDto.getEmail(), encodedPassword);
+        user.addAuthority(UserConverter.makeAuthority(user));
         userRepository.save(user);
+
+        log.info("회원가입 완료 pk:{}, email:{}", user.getId(), user.getEmail());
     }
 
     public User authenticate(String email, String rawPassword) {
@@ -39,11 +41,6 @@ public class UserService {
                 .filter(user -> passwordEncoder.matches(rawPassword, user.getPassword())) // 해싱 후 비교
                 .orElseThrow(() -> new GeneralException(ErrorCode.USER_PASSWORD_MISMATCH));
 
-    }
-
-    public RoleType getRoleType(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorCode.BAD_REQUEST));
-        return user.getRole();
     }
 
     private void checkEmail(String email) {
