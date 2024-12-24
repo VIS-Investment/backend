@@ -5,7 +5,10 @@ import jakarta.servlet.http.HttpSession;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 import vis.backend.demo.global.api_payload.ErrorCode;
 import vis.backend.demo.global.exception.GeneralException;
@@ -35,7 +38,6 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(userReqDto.getPassword());
 
         User user = UserConverter.toUser(userReqDto.getEmail(), encodedPassword, userReqDto.getNickname());
-        user.addAuthority(UserConverter.makeAuthority(user));
         userRepository.save(user);
 
         log.info("회원가입 완료 pk:{}, email:{}", user.getId(), user.getEmail());
@@ -43,7 +45,7 @@ public class UserService {
 
     public User login(UserLoginReqDto userReqDto, HttpServletRequest request) {
         User user = authenticate(userReqDto.getEmail(), userReqDto.getPassword());
-        setSession(user, request);
+        setSessionAndAuthentication(user, request);
         return user;
     }
 
@@ -88,10 +90,26 @@ public class UserService {
         return user;
     }
 
-    private void setSession(User user, HttpServletRequest request) {
+    private void setSessionAndAuthentication(User user, HttpServletRequest request) {
         request.getSession().invalidate(); // 세션을 생성하기 전에 기존의 세션 파기
-        HttpSession session = request.getSession(true); // true: 세션이 없으면 새로 생성
-        session.setAttribute("userEmail", user.getEmail()); // 생성된 세션은 클라이언트에 JSESSIONID 쿠키로 전달
+
+        // SecurityContext 설정
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        user.getEmail(), // Principal(기본 정보)
+                        null, // Credentials(자격 증명)
+                        user.getAuthorities() // GrantedAuthority(권한)
+                );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // SecurityContext를 세션에 저장
+        HttpSession session = request.getSession(true);
+        session.setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                SecurityContextHolder.getContext()
+        );
+        session.setAttribute("userEmail", user.getEmail());
         session.setMaxInactiveInterval(60 * 30); // 30분 동안 비활성 상태가 지속되면 세션이 만료
     }
 

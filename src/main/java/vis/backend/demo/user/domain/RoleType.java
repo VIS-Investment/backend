@@ -1,6 +1,6 @@
 package vis.backend.demo.user.domain;
 
-public enum AuthorityType {
+public enum RoleType {
     ADMIN,
     USER
 }

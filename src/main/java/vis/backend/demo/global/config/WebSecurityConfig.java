@@ -25,7 +25,8 @@ public class WebSecurityConfig {
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                         CorsConfiguration config = new CorsConfiguration();
                         config.setAllowedOrigins(Arrays.asList(
-                                "http://localhost:8080" // 추후 배포 환경 추가
+                                "http://localhost:8080",
+                                "http://localhost:3000" // 추후 배포 환경 추가
                         ));
                         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                         config.setAllowCredentials(true); // 인정 정보(쿠키) 허용
@@ -44,14 +45,14 @@ public class WebSecurityConfig {
                                 "/auth/login", // Login API
                                 "/auth/register", // Register API
                                 "/auth/logged-check"
-                        ).permitAll() // 인증 없이 허용
+                        ).permitAll()
 
-                        // 나머지 요청은 인증만 필요 (모든 역할 허용)
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                        .sessionFixation().migrateSession()
                 )
                 .logout(logout -> logout
                         .logoutUrl("/auth/logout") // REST API 로그아웃

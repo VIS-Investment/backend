@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -74,4 +76,12 @@ public class UserController {
         return ApiResponse.onSuccess(SuccessCode.USER_LOGGED_CHECK_SUCCESS, emailAtttribute);
     }
 
+    @GetMapping("/debug/context")
+    public String debugSecurityContext() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) {
+            return "No authentication found";
+        }
+        return "Principal: " + auth.getPrincipal() + ", Authorities: " + auth.getAuthorities();
+    }
 }
