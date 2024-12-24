@@ -17,7 +17,8 @@ import vis.backend.demo.global.api_payload.ErrorCode;
 import vis.backend.demo.global.api_payload.SuccessCode;
 import vis.backend.demo.global.exception.GeneralException;
 import vis.backend.demo.user.domain.User;
-import vis.backend.demo.user.dto.UserRequestDto.UserSimpleReqDto;
+import vis.backend.demo.user.dto.UserRequestDto.UserLoginReqDto;
+import vis.backend.demo.user.dto.UserRequestDto.UserRegisterReqDto;
 import vis.backend.demo.user.service.UserService;
 
 @Tag(name = "회원", description = "회원 관련 api 입니다.")
@@ -32,7 +33,7 @@ public class UserController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "USER_2011", description = "회원가입 되었습니다."),
     })
     @PostMapping("/register")
-    public ApiResponse<String> register(@RequestBody UserSimpleReqDto userReqDto) {
+    public ApiResponse<String> register(@RequestBody UserRegisterReqDto userReqDto) {
         userService.register(userReqDto);
         return ApiResponse.onSuccess(SuccessCode.USER_SIGN_IN_SUCCESS, "회원가입 성공");
     }
@@ -42,7 +43,7 @@ public class UserController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "USER_2001", description = "로그인 되었습니다."),
     })
     @PostMapping("/login")
-    public ApiResponse<String> login(@RequestBody UserSimpleReqDto userReqDto, HttpServletRequest request) {
+    public ApiResponse<String> login(@RequestBody UserLoginReqDto userReqDto, HttpServletRequest request) {
         User user = userService.login(userReqDto, request);
 
         return ApiResponse.onSuccess(SuccessCode.USER_LOGIN_SUCCESS, user.getEmail());

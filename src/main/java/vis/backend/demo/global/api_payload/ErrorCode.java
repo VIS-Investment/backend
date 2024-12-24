@@ -14,12 +14,16 @@ public enum ErrorCode implements BaseCode {
 
     // User
     ALREADY_REGISTERED(HttpStatus.BAD_REQUEST, "USER_400", "이미 회원가입을 하셨습니다. 로그인해주세요."),
-    LOGIN_FAILED(HttpStatus.BAD_REQUEST, "USER_400", "아이디와 비밀번호를 다시 확인해주세요."),
     USER_NOT_LOGGED_IN(HttpStatus.BAD_REQUEST, "USER_400", "유저의 세션 ID가 쿠키에 없습니다."),
 
-    PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "USER_400", "비밀번호가 틀렸습니다. 다시 입력해주세요"),
     WRONG_EMAIL_FORMAT(HttpStatus.BAD_REQUEST, "USER_400", "올바른 이메일 형식으로 입력하세요."),
+    WRONG_PASSWORD_FORMAT(HttpStatus.BAD_REQUEST, "USER_400",
+            "비밀번호는 8~20자로, 숫자, 알파벳, 특수문자(!@#$%^&*()_.=+~-) 각각 최소 하나씩을 포함해야합니다."),
+
     ALREADY_EXISTED_EMAIL(HttpStatus.BAD_REQUEST, "USER_400", "이미 존재하는 이메일입니다."),
+    ALREADY_EXISTED_NICKNAME(HttpStatus.BAD_REQUEST, "USER_400", "이미 존재하는 닉네임입니다."),
+
+    PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "USER_400", "비밀번호가 틀렸습니다. 다시 입력해주세요"),
 
     EMAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404", "사용자가 없는 이메일입니다.");
 

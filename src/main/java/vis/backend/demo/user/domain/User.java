@@ -32,9 +32,6 @@ public class User extends BaseEntity {
     private String email;
 
     @Column(unique = true)
-    private String username;
-
-    @Column(unique = true)
     private String nickname;
 
     @Column(nullable = false)
@@ -49,8 +46,7 @@ public class User extends BaseEntity {
         return "User{" +
                 "id=" + id +
                 ", email='" + email + '\'' +
-                ", username='" + username + '\'' +
-                ", username='" + nickname + '\'' +
+                ", nickname='" + nickname + '\'' +
                 ", password='" + "***" + '\'' +
                 '}';
     }

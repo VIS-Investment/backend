@@ -7,11 +7,11 @@ import vis.backend.demo.user.domain.User;
 
 @NoArgsConstructor
 public class UserConverter {
-    public static User toUser(String email, String encodedPassword) {
+    public static User toUser(String email, String encodedPassword, String nickname) {
         return User.builder()
                 .email(email)
                 .password(encodedPassword)
-                .username(email)
+                .nickname(nickname)
                 .build();
     }
 

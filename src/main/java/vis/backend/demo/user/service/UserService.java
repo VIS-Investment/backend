@@ -12,7 +12,8 @@ import vis.backend.demo.global.exception.GeneralException;
 import vis.backend.demo.global.utils.Constants;
 import vis.backend.demo.user.converter.UserConverter;
 import vis.backend.demo.user.domain.User;
-import vis.backend.demo.user.dto.UserRequestDto.UserSimpleReqDto;
+import vis.backend.demo.user.dto.UserRequestDto.UserLoginReqDto;
+import vis.backend.demo.user.dto.UserRequestDto.UserRegisterReqDto;
 import vis.backend.demo.user.repository.UserRepository;
 
 @Slf4j
@@ -22,24 +23,25 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public void register(UserSimpleReqDto userReqDto) {
+    public void register(UserRegisterReqDto userReqDto) {
         if (userRepository.findByEmail(userReqDto.getEmail()).isPresent()) {
             throw new GeneralException(ErrorCode.ALREADY_REGISTERED);
         }
 
         checkEmail(userReqDto.getEmail());
         checkPassword(userReqDto.getPassword());
+        checkNickname(userReqDto.getNickname());
 
         String encodedPassword = passwordEncoder.encode(userReqDto.getPassword());
 
-        User user = UserConverter.toUser(userReqDto.getEmail(), encodedPassword);
+        User user = UserConverter.toUser(userReqDto.getEmail(), encodedPassword, userReqDto.getNickname());
         user.addAuthority(UserConverter.makeAuthority(user));
         userRepository.save(user);
 
         log.info("회원가입 완료 pk:{}, email:{}", user.getId(), user.getEmail());
     }
 
-    public User login(UserSimpleReqDto userReqDto, HttpServletRequest request) {
+    public User login(UserLoginReqDto userReqDto, HttpServletRequest request) {
         User user = authenticate(userReqDto.getEmail(), userReqDto.getPassword());
         setSession(user, request);
         return user;
@@ -65,7 +67,13 @@ public class UserService {
     private void checkPassword(String password) {
         Pattern passwordPattern = Pattern.compile(Constants.PASSWORD_REGEX);
         if (!passwordPattern.matcher(password).matches()) {
-            throw new GeneralException(ErrorCode.LOGIN_FAILED);
+            throw new GeneralException(ErrorCode.WRONG_PASSWORD_FORMAT);
+        }
+    }
+
+    private void checkNickname(String nickname) {
+        if (userRepository.findByNickname(nickname).isPresent()) {
+            throw new GeneralException(ErrorCode.ALREADY_EXISTED_NICKNAME);
         }
     }
 
@@ -86,6 +94,5 @@ public class UserService {
         session.setAttribute("userEmail", user.getEmail()); // 생성된 세션은 클라이언트에 JSESSIONID 쿠키로 전달
         session.setMaxInactiveInterval(60 * 30); // 30분 동안 비활성 상태가 지속되면 세션이 만료
     }
-
 
 }
