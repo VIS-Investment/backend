@@ -1,5 +1,7 @@
 package vis.backend.demo.user.service;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,10 +24,11 @@ public class UserService {
 
     public void register(UserSimpleReqDto userReqDto) {
         if (userRepository.findByEmail(userReqDto.getEmail()).isPresent()) {
-            throw new GeneralException(ErrorCode.USER_ALREADY_REGISTERED);
+            throw new GeneralException(ErrorCode.ALREADY_REGISTERED);
         }
 
         checkEmail(userReqDto.getEmail());
+        checkPassword(userReqDto.getPassword());
 
         String encodedPassword = passwordEncoder.encode(userReqDto.getPassword());
 
@@ -36,11 +39,11 @@ public class UserService {
         log.info("회원가입 완료 pk:{}, email:{}", user.getId(), user.getEmail());
     }
 
-    public User authenticate(String email, String rawPassword) {
-        return userRepository.findByEmail(email)
-                .filter(user -> passwordEncoder.matches(rawPassword, user.getPassword())) // 해싱 후 비교
-                .orElseThrow(() -> new GeneralException(ErrorCode.USER_PASSWORD_MISMATCH));
+    public User login(UserSimpleReqDto userReqDto, HttpServletRequest request) {
+        User user = authenticate(userReqDto.getEmail(), userReqDto.getPassword());
+        setSession(user, request);
 
+        return user;
     }
 
     private void checkEmail(String email) {
@@ -52,5 +55,27 @@ public class UserService {
             throw new GeneralException(ErrorCode.ALREADY_EXISTED_EMAIL);
         }
     }
+
+    private void checkPassword(String password) {
+        Pattern passwordPattern = Pattern.compile(Constants.PASSWORD_REGEX);
+        if (!passwordPattern.matcher(password).matches()) {
+            throw new GeneralException(ErrorCode.LOGIN_FAILED);
+        }
+    }
+
+    private User authenticate(String email, String rawPassword) {
+        return userRepository.findByEmail(email)
+                .filter(user -> passwordEncoder.matches(rawPassword, user.getPassword())) // 해싱 후 비교
+                .orElseThrow(() -> new GeneralException(ErrorCode.PASSWORD_MISMATCH));
+
+    }
+
+    private void setSession(User user, HttpServletRequest request) {
+        request.getSession().invalidate(); // 세션을 생성하기 전에 기존의 세션 파기
+        HttpSession session = request.getSession(true); // true: 세션이 없으면 새로 생성
+        session.setAttribute("userEmail", user.getEmail()); // 생성된 세션은 클라이언트에 JSESSIONID 쿠키로 전달
+        session.setMaxInactiveInterval(60 * 30); // 30분 동안 비활성 상태가 지속되면 세션이 만료
+    }
+
 
 }
