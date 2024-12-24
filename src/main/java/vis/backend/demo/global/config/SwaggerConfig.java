@@ -27,25 +27,16 @@ public class SwaggerConfig {
                 .title("VIS Investment API")
                 .description("VIS API 명세서");
 
-        // SecurityScheme명
-        String jwtSchemeName = "AccessToken";
-        // API 요청헤더에 인증정보 포함
-        SecurityRequirement securityRequirement = new SecurityRequirement().addList(jwtSchemeName);
-        // SecuritySchemes 등록
-        Components components = new Components()
-                .addSecuritySchemes(jwtSchemeName, new SecurityScheme()
-                        .name(jwtSchemeName)
-                        .type(SecurityScheme.Type.HTTP) // HTTP 방식
-                        .scheme("bearer")
-                        .bearerFormat("JWT")); // 토큰 형식을 지정하는 임의의 문자(Optional)
+        SecurityScheme auth = new SecurityScheme()
+                .type(SecurityScheme.Type.APIKEY).in(SecurityScheme.In.COOKIE).name("JSESSIONID");
+        SecurityRequirement securityRequirement = new SecurityRequirement().addList("basicAuth");
 
         return new OpenAPI()
-                .info(info)
+                .components(new Components().addSecuritySchemes("basicAuth", auth))
                 .addSecurityItem(securityRequirement)
-                .components(components);
+                .info(info);
     }
 
-    // 사용자 auth -> swagger 사용 가능
     @Bean
     public GroupedOpenApi allGroup() {
         return GroupedOpenApi.builder()
