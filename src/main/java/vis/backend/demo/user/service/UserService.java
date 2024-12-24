@@ -70,9 +70,14 @@ public class UserService {
     }
 
     private User authenticate(String email, String rawPassword) {
-        return userRepository.findByEmail(email)
-                .filter(user -> passwordEncoder.matches(rawPassword, user.getPassword())) // 해싱 후 비교
-                .orElseThrow(() -> new GeneralException(ErrorCode.PASSWORD_MISMATCH));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorCode.EMAIL_NOT_FOUND));
+
+        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+            throw new GeneralException(ErrorCode.PASSWORD_MISMATCH);
+        }
+
+        return user;
     }
 
     private void setSession(User user, HttpServletRequest request) {
