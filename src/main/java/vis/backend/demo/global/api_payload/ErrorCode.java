@@ -24,6 +24,7 @@ public enum ErrorCode implements BaseCode {
     ALREADY_EXISTED_NICKNAME(HttpStatus.BAD_REQUEST, "USER_400", "이미 존재하는 닉네임입니다."),
 
     PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "USER_400", "비밀번호가 틀렸습니다. 다시 입력해주세요"),
+    WRONG_INVEST_TOKEN(HttpStatus.BAD_REQUEST, "USER_400", "한국투자증권의 토큰값이 NULL입니다."),
 
     EMAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404", "사용자가 없는 이메일입니다.");
 

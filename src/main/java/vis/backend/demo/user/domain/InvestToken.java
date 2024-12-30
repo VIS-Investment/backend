@@ -14,6 +14,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import vis.backend.demo.global.api_payload.ErrorCode;
+import vis.backend.demo.global.exception.GeneralException;
 
 @Entity
 @Getter
@@ -37,6 +39,10 @@ public class InvestToken {
     private User user;
 
     public void updateToken(String newAccessToken, String newExpireTime) {
+        if (newAccessToken == null || newExpireTime == null) {
+            throw new GeneralException(ErrorCode.WRONG_INVEST_TOKEN);
+        }
+
         this.accessToken = newAccessToken;
         this.expireTime = newExpireTime;
     }
