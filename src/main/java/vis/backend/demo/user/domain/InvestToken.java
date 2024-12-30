@@ -35,4 +35,9 @@ public class InvestToken {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    public void updateToken(String newAccessToken, String newExpireTime) {
+        this.accessToken = newAccessToken;
+        this.expireTime = newExpireTime;
+    }
 }

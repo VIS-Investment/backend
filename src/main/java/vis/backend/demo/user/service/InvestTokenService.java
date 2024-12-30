@@ -1,6 +1,10 @@
 package vis.backend.demo.user.service;
 
+import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +15,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import vis.backend.demo.global.api_payload.ErrorCode;
+import vis.backend.demo.global.exception.GeneralException;
 import vis.backend.demo.user.converter.InvestTokenConverter;
 import vis.backend.demo.user.domain.InvestToken;
 import vis.backend.demo.user.domain.User;
@@ -28,17 +34,26 @@ public class InvestTokenService {
     @Value("${korea_investment.secret_key}")
     private String appSecret;
 
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+
     private final InvestTokenRepository investTokenRepository;
     private final RestTemplate restTemplate;
     private final UserRepository userRepository;
 
+    @Transactional
+    public void checkKoreaInvestmentToken(User user) {
+        InvestToken investToken = investTokenRepository.findByUser(user)
+                .orElseGet(() -> createInvestToken(user, "new"));
 
-    public InvestToken getKoreaInvestmentToken(User user) {
-        return investTokenRepository.findByUser(user)
-                .orElseGet(() -> createInvestToken(user));
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expireTime = LocalDateTime.parse(investToken.getExpireTime(), formatter);
+        if (expireTime.isBefore(now)) {
+            createInvestToken(user, "refresh");
+        }
     }
 
-    private InvestToken createInvestToken(User user) {
+    private InvestToken createInvestToken(User user, String status) {
         String url = "https://openapivts.koreainvestment.com:29443/oauth2/tokenP";
 
         // 헤더 설정
@@ -73,13 +88,32 @@ public class InvestTokenService {
         String accessToken = responseBody.get("access_token");
         String accessTokenExpired = responseBody.get("access_token_token_expired");
 
-        // InvestToken 생성 및 저장
+        InvestToken investToken;
+        if (Objects.equals(status, "new")) {
+            investToken = saveNewInvestToken(user, accessToken, accessTokenExpired);
+        } else {
+            investToken = saveRefreshInvestToken(user, accessToken, accessTokenExpired);
+        }
+
+        return investToken;
+    }
+
+    private InvestToken saveNewInvestToken(User user, String accessToken, String accessTokenExpired) {
         InvestToken investToken = InvestTokenConverter.toInvestToken(user, accessToken, accessTokenExpired);
         investTokenRepository.save(investToken);
 
-        // 사용자와 연관 관계 설정
         user.setInvestToken(investToken);
         userRepository.save(user);
+
+        return investToken;
+    }
+
+    private InvestToken saveRefreshInvestToken(User user, String accessToken, String accessTokenExpired) {
+        InvestToken investToken = investTokenRepository.findByUser(user)
+                .orElseThrow(() -> new GeneralException(ErrorCode.BAD_REQUEST));
+
+        investToken.updateToken(accessToken, accessTokenExpired);
+        investTokenRepository.save(investToken);
 
         return investToken;
     }
