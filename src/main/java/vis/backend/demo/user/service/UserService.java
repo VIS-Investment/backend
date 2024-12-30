@@ -25,6 +25,7 @@ import vis.backend.demo.user.repository.UserRepository;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final InvestTokenService investTokenService;
 
     public void register(UserRegisterReqDto userReqDto) {
         if (userRepository.findByEmail(userReqDto.getEmail()).isPresent()) {
@@ -46,6 +47,7 @@ public class UserService {
     public User login(UserLoginReqDto userReqDto, HttpServletRequest request) {
         User user = authenticate(userReqDto.getEmail(), userReqDto.getPassword());
         setSessionAndAuthentication(user, request);
+        investTokenService.getKoreaInvestmentToken(user);
         return user;
     }
 

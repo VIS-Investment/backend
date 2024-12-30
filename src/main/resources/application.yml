@@ -19,6 +19,10 @@ server:
         secure: true
         same-site: none
 
+korea_investment:
+  app_key: ${INVEST_APP_KEY}
+  secret_key: ${INVEST_SECRET_KEY}
+
 ---
 
 # local profile

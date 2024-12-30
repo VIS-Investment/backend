@@ -15,6 +15,7 @@ import vis.backend.demo.user.converter.InvestTokenConverter;
 import vis.backend.demo.user.domain.InvestToken;
 import vis.backend.demo.user.domain.User;
 import vis.backend.demo.user.repository.InvestTokenRepository;
+import vis.backend.demo.user.repository.UserRepository;
 
 @Slf4j
 @Service
@@ -29,6 +30,7 @@ public class InvestTokenService {
 
     private final InvestTokenRepository investTokenRepository;
     private final RestTemplate restTemplate;
+    private final UserRepository userRepository;
 
 
     public InvestToken getKoreaInvestmentToken(User user) {
@@ -42,16 +44,22 @@ public class InvestTokenService {
         // 헤더 설정
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
-        headers.set("grant_type", "client_credentials");
-        headers.set("appkey", appKey);
-        headers.set("appsecret", appSecret);
 
-        // 요청 바디 설정 (POST 요청은 보통 필요하지 않지만 필요할 경우 추가)
-        HttpEntity<String> requestEntity = new HttpEntity<>(null, headers);
+        // 요청 본문 설정
+        Map<String, String> body = Map.of(
+                "grant_type", "client_credentials",
+                "appkey", appKey,
+                "appsecret", appSecret
+        );
+
+        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, headers);
 
         // API 호출
         ResponseEntity<Map<String, String>> response = restTemplate.exchange(
-                url, HttpMethod.POST, requestEntity, new ParameterizedTypeReference<Map<String, String>>() {
+                url,
+                HttpMethod.POST,
+                requestEntity,
+                new ParameterizedTypeReference<Map<String, String>>() {
                 }
         );
 
@@ -65,8 +73,13 @@ public class InvestTokenService {
         String accessToken = responseBody.get("access_token");
         String accessTokenExpired = responseBody.get("access_token_token_expired");
 
+        // InvestToken 생성 및 저장
         InvestToken investToken = InvestTokenConverter.toInvestToken(user, accessToken, accessTokenExpired);
         investTokenRepository.save(investToken);
+
+        // 사용자와 연관 관계 설정
+        user.setInvestToken(investToken);
+        userRepository.save(user);
 
         return investToken;
     }
