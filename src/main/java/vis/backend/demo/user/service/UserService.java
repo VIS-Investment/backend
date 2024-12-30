@@ -47,7 +47,7 @@ public class UserService {
     public User login(UserLoginReqDto userReqDto, HttpServletRequest request) {
         User user = authenticate(userReqDto.getEmail(), userReqDto.getPassword());
         setSessionAndAuthentication(user, request);
-        investTokenService.getKoreaInvestmentToken(user);
+        investTokenService.checkKoreaInvestmentToken(user);
         return user;
     }
 
