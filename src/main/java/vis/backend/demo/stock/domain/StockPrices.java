@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,7 +34,7 @@ public class StockPrices {
     private StockInfo stockInfo;
 
     @Column(nullable = false)
-    private String tradeDate;
+    private LocalDate tradeDate;
 
     private BigDecimal openPrice;
 
