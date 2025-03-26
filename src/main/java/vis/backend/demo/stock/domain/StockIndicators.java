@@ -53,4 +53,16 @@ public class StockIndicators {
     private BigDecimal bollingerUp;
 
     private BigDecimal bollingerDown;
+
+    private BigDecimal rsiBollingerUp;
+
+    private BigDecimal rsiBollingerDown;
+
+    private BigDecimal obvBollingerUp;
+
+    private BigDecimal obvBollingerDown;
+
+    private BigDecimal pvtBollingerUp;
+
+    private BigDecimal pvtBollingerDown;
 }
