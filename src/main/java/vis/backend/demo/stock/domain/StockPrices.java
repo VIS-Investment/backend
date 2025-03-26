@@ -44,4 +44,12 @@ public class StockPrices {
     private BigDecimal lowPrice;
 
     private Long volume;
+
+    public void updatePrices(BigDecimal open, BigDecimal close, BigDecimal high, BigDecimal low, Long volume) {
+        this.openPrice = open;
+        this.closePrice = close;
+        this.highPrice = high;
+        this.lowPrice = low;
+        this.volume = volume;
+    }
 }
