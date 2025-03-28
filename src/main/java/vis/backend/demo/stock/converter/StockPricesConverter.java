@@ -5,7 +5,7 @@ import vis.backend.demo.stock.domain.StockPrices;
 import vis.backend.demo.stock.dto.StockDto;
 
 public class StockPricesConverter {
-    public StockPrices toEntity(StockDto.StockPricesSimpleDto dto, StockInfo stockInfo) {
+    public static StockPrices toEntity(StockDto.StockPricesSimpleDto dto, StockInfo stockInfo) {
         return StockPrices.builder()
                 .stockInfo(stockInfo)
                 .tradeDate(dto.getTradeDate())
