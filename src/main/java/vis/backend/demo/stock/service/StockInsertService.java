@@ -2,7 +2,6 @@ package vis.backend.demo.stock.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -27,8 +26,8 @@ public class StockInsertService {
 
     private final StockPricesRepository stockPricesRepository;
     private final StockInfoRepository stockInfoRepository;
-    private final StockPricesConverter converter = new StockPricesConverter();
     private final StockFetcher fetcher;
+    private final StockPricesConverter converter = new StockPricesConverter();
 
     public void fetchAndInsert(String range) {
         List<StockInfo> stockInfos = stockInfoRepository.findAll();
@@ -37,10 +36,10 @@ public class StockInsertService {
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             List<Callable<List<StockPrices>>> tasks = stockInfos.stream()
                     .map(info -> (Callable<List<StockPrices>>) () -> {
-                        Optional<List<StockDto.StockPricesSimpleDto>> result = fetcher.fetch(info.getTicker(), range);
-                        return result.map(dtos -> dtos.stream()
+                        List<StockDto.StockPricesSimpleDto> dtos = fetcher.fetch(info.getTicker(), range);
+                        return dtos.stream()
                                 .map(dto -> converter.toEntity(dto, info))
-                                .collect(Collectors.toList())).orElseGet(List::of);
+                                .collect(Collectors.toList());
                     })
                     .collect(Collectors.toList());
 
@@ -48,7 +47,7 @@ public class StockInsertService {
 
             for (Future<List<StockPrices>> future : futures) {
                 try {
-                    allEntities.addAll(future.get(10, TimeUnit.SECONDS));
+                    allEntities.addAll(future.get(10, TimeUnit.SECONDS)); // 타임아웃 처리 추가
                 } catch (TimeoutException e) {
                     System.err.println("Timeout occurred for a task: " + e.getMessage());
                 } catch (ExecutionException | InterruptedException e) {
