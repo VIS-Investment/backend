@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import vis.backend.demo.stock.service.StockInsertService;
 
@@ -30,7 +31,7 @@ public class StockPricesController {
      * 수동 호출용 엔드포인트
      */
     @PostMapping("/pre-insert")
-    public void fetchNow(String range) {
+    public void fetchNow(@RequestParam(name = "range", defaultValue = "1d") String range) {
         stockInsertService.fetchAndInsert(range);
     }
 
