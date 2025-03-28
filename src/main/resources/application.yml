@@ -31,17 +31,16 @@ spring:
     username: ${local.db.username}
     password: ${local.db.password}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      minimum-idle: 5
-      maximum-pool-size: 20
-      idle-timeout: 30000
-      pool-name: HikariPool-1
   sql:
     init:
       mode: never
   jpa:
     properties:
       hibernate:
+        jdbc:
+          batch_size: 10000
+        order_inserts: true
+        order_updates: true
         use_sql_comments: true
         hbm2ddl:
           auto: update
@@ -59,17 +58,16 @@ spring:
     username: ${aws.db.username}
     password: ${aws.db.password}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      minimum-idle: 5
-      maximum-pool-size: 20
-      idle-timeout: 30000
-      pool-name: HikariPool-1
   sql:
     init:
       mode: never
   jpa:
     properties:
       hibernate:
+        jdbc:
+          batch_size: 10000
+        order_inserts: true
+        order_updates: true
         use_sql_comments: true
         hbm2ddl:
           auto: update
