@@ -1,17 +1,14 @@
 package vis.backend.demo.stock.domain;
 
-import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,21 +23,18 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "stock_prices_composite_idx",
         indexes = {
-                @Index(name = "idx_date_ticker_id", columnList = "trade_date, ticker_id")
+                @Index(name = "idx_date", columnList = "trade_date")
         }
 )
 public class StockPricesCompositeIdx {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @EmbeddedId
+    private StockPricesId id; // 복합 PK 사용
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("stockInfo")
     @JoinColumn(name = "ticker_id", nullable = false)
     private StockInfo stockInfo;
-
-    @Column(nullable = false)
-    private LocalDate tradeDate;
 
     private BigDecimal openPrice;
 
@@ -51,12 +45,4 @@ public class StockPricesCompositeIdx {
     private BigDecimal lowPrice;
 
     private Long volume;
-
-    public void updatePrices(BigDecimal open, BigDecimal close, BigDecimal high, BigDecimal low, Long volume) {
-        this.openPrice = open;
-        this.closePrice = close;
-        this.highPrice = high;
-        this.lowPrice = low;
-        this.volume = volume;
-    }
 }
