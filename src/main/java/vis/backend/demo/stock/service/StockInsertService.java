@@ -26,6 +26,7 @@ import vis.backend.demo.stock.repository.StockPricesCompositeIdxRepository;
 public class StockInsertService {
 
     private final StockPricesCompositeIdxRepository stockPricesRepository;
+    private final StockBatchInserter stockBatchInserter;
     private final StockInfoRepository stockInfoRepository;
     private final StockFetcher fetcher;
 
@@ -47,7 +48,7 @@ public class StockInsertService {
 
             for (Future<List<StockPricesCompositeIdx>> future : futures) {
                 try {
-                    allEntities.addAll(future.get(10, TimeUnit.SECONDS)); // 타임아웃 처리 추가
+                    allEntities.addAll(future.get(10, TimeUnit.SECONDS));
                 } catch (TimeoutException e) {
                     System.err.println("Timeout occurred for a task: " + e.getMessage());
                 } catch (ExecutionException | InterruptedException e) {
@@ -57,7 +58,7 @@ public class StockInsertService {
             }
 
             if (!allEntities.isEmpty()) {
-                stockPricesRepository.saveAll(allEntities);
+                stockBatchInserter.batchInsertIgnore(allEntities);
             }
 
         } catch (Exception e) {

@@ -4,10 +4,12 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
+import lombok.Getter;
 
 @Embeddable
 public class StockPricesId implements Serializable {
     private Integer stockInfo;
+    @Getter
     private LocalDate tradeDate;
 
     public StockPricesId() {
