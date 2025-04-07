@@ -16,26 +16,26 @@ import org.springframework.stereotype.Service;
 import vis.backend.demo.stock.api.StockFetcher;
 import vis.backend.demo.stock.converter.StockPricesConverter;
 import vis.backend.demo.stock.domain.StockInfo;
-import vis.backend.demo.stock.domain.StockPrices;
+import vis.backend.demo.stock.domain.StockPricesCompositeIdx;
 import vis.backend.demo.stock.dto.StockDto;
 import vis.backend.demo.stock.repository.StockInfoRepository;
-import vis.backend.demo.stock.repository.StockPricesRepository;
+import vis.backend.demo.stock.repository.StockPricesCompositeIdxRepository;
 
 @Service
 @RequiredArgsConstructor
 public class StockInsertService {
 
-    private final StockPricesRepository stockPricesRepository;
+    private final StockPricesCompositeIdxRepository stockPricesRepository;
     private final StockInfoRepository stockInfoRepository;
     private final StockFetcher fetcher;
 
     public void fetchAndInsert(String range) {
         List<StockInfo> stockInfos = stockInfoRepository.findAll();
-        List<StockPrices> allEntities = new ArrayList<>();
+        List<StockPricesCompositeIdx> allEntities = new ArrayList<>();
 
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            List<Callable<List<StockPrices>>> tasks = stockInfos.stream()
-                    .map(info -> (Callable<List<StockPrices>>) () -> {
+            List<Callable<List<StockPricesCompositeIdx>>> tasks = stockInfos.stream()
+                    .map(info -> (Callable<List<StockPricesCompositeIdx>>) () -> {
                         List<StockDto.StockPricesSimpleDto> dtos = fetcher.fetch(info.getTicker(), range);
                         return dtos.stream()
                                 .map(dto -> StockPricesConverter.toEntity(dto, info))
@@ -43,9 +43,9 @@ public class StockInsertService {
                     })
                     .collect(Collectors.toList());
 
-            List<Future<List<StockPrices>>> futures = executor.invokeAll(tasks);
+            List<Future<List<StockPricesCompositeIdx>>> futures = executor.invokeAll(tasks);
 
-            for (Future<List<StockPrices>> future : futures) {
+            for (Future<List<StockPricesCompositeIdx>> future : futures) {
                 try {
                     allEntities.addAll(future.get(10, TimeUnit.SECONDS)); // 타임아웃 처리 추가
                 } catch (TimeoutException e) {
@@ -81,7 +81,7 @@ public class StockInsertService {
         try {
             List<StockDto.StockPricesSimpleDto> dtos = fetcher.fetch(aaplInfo.getTicker(), range);
 
-            List<StockPrices> entities = dtos.stream()
+            List<StockPricesCompositeIdx> entities = dtos.stream()
                     .map(dto -> StockPricesConverter.toEntity(dto, aaplInfo))
                     .collect(Collectors.toList());
 

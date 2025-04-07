@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import vis.backend.demo.stock.domain.StockInfo;
 
 public class StockDto {
     @Schema(description = "StockPricesSimpleDto")
@@ -16,9 +15,6 @@ public class StockDto {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class StockPricesSimpleDto {
-
-        @Schema(description = "티커 info")
-        private StockInfo stockInfo;
 
         @Schema(description = "날짜")
         private LocalDate tradeDate;
