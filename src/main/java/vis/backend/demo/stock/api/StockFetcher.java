@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -17,22 +19,27 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import vis.backend.demo.stock.dto.StockDto;
 
 @Component
 public class StockFetcher {
     private final RestTemplate restTemplate = new RestTemplate();
+    private static final Logger log = LoggerFactory.getLogger(StockFetcher.class);
+
 
     public List<StockDto.StockPricesSimpleDto> fetch(String ticker, String range) {
-        String url = String.format(
-                "https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=%s",
-                ticker, range
-        );
+        URI uri = UriComponentsBuilder
+                .fromHttpUrl("https://query1.finance.yahoo.com/v8/finance/chart/" + ticker.trim())
+                .queryParam("interval", "1d")
+                .queryParam("range", range)
+                .build()
+                .toUri();
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
 
-        RequestEntity<Void> request = new RequestEntity<>(headers, HttpMethod.GET, URI.create(url));
+        RequestEntity<Void> request = new RequestEntity<>(headers, HttpMethod.GET, uri);
 
         try {
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
@@ -110,7 +117,6 @@ public class StockFetcher {
 
                 LocalDate date = Instant.ofEpochSecond(timestamps.get(i))
                         .atZone(ZoneId.of("UTC")).toLocalDate();
-                System.out.println(date);
 
                 dtos.add(StockDto.StockPricesSimpleDto.builder()
                         .tradeDate(date)
@@ -120,14 +126,15 @@ public class StockFetcher {
                         .lowPrice(BigDecimal.valueOf(lows.get(i)))
                         .volume(volumes.get(i))
                         .build());
+                log.info("[" + ticker + "] " + "[" + date + "] " + "is fetched");
             }
             if (dtos.isEmpty()) {
-                System.out.println("[" + ticker + "] No data added to DTOs (all nulls or empty)");
+                log.error("[" + ticker + "] No data added to DTOs (all nulls or empty)");
             }
             return dtos;
 
         } catch (Exception e) {
-            System.out.println("[" + ticker + "] Exception: " + e.getMessage());
+            log.error("[" + ticker + "] Exception: " + e.getMessage());
             return List.of();
         }
     }
