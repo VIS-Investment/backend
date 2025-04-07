@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -22,11 +21,10 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import vis.backend.demo.stock.dto.StockDto;
 
+@Slf4j
 @Component
 public class StockFetcher {
     private final RestTemplate restTemplate = new RestTemplate();
-    private static final Logger log = LoggerFactory.getLogger(StockFetcher.class);
-
 
     public List<StockDto.StockPricesSimpleDto> fetch(String ticker, String range) {
         URI uri = UriComponentsBuilder
