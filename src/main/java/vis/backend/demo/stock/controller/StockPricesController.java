@@ -3,6 +3,7 @@ package vis.backend.demo.stock.controller;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import vis.backend.demo.stock.service.StockInsertService;
 
 @RestController
+@Slf4j
 @RequestMapping("/stocks")
 @RequiredArgsConstructor
 public class StockPricesController {
@@ -23,7 +25,7 @@ public class StockPricesController {
      */
     @Scheduled(cron = "0 10 6 * * TUE-SAT", zone = "Asia/Seoul")
     public void scheduledFetchAndInsert() {
-        System.out.println("\uD83D\uDD52 Fetching stock prices at " + LocalTime.now(ZoneId.of("Asia/Seoul")));
+        log.info("Fetching stock prices at " + LocalTime.now(ZoneId.of("Asia/Seoul")));
         stockInsertService.fetchAndInsert("1d");
     }
 
@@ -31,8 +33,12 @@ public class StockPricesController {
      * 수동 호출용 엔드포인트
      */
     @PostMapping("/pre-insert")
-    public void fetchNow(@RequestParam(name = "range", defaultValue = "1d") String range) {
+    public void preFetch(@RequestParam(name = "range", defaultValue = "1d") String range) {
         stockInsertService.fetchAndInsert(range);
     }
 
+    @PostMapping("/insert-test")
+    public void fetchTest(@RequestParam(name = "range", defaultValue = "1d") String range) {
+        stockInsertService.fetchAndInsertTest(range);
+    }
 }
