@@ -19,6 +19,13 @@ server:
         secure: true
         same-site: none
 
+logging:
+  level:
+    root: error
+    vis.backend.demo.stock: info
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+
 ---
 
 # local profile
@@ -35,13 +42,15 @@ spring:
     init:
       mode: never
   jpa:
+    show-sql: true
     properties:
       hibernate:
-        jdbc:
-          batch_size: 10000
+        format_sql: true
         order_inserts: true
         order_updates: true
         use_sql_comments: true
+        jdbc:
+          batch_size: 10000
         hbm2ddl:
           auto: update
         default_batch_fetch_size: 1000
