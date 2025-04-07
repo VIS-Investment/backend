@@ -12,7 +12,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StopWatch;
 import vis.backend.demo.stock.api.StockFetcher;
 import vis.backend.demo.stock.converter.StockPricesConverter;
 import vis.backend.demo.stock.domain.StockInfo;
@@ -22,6 +24,7 @@ import vis.backend.demo.stock.repository.StockInfoRepository;
 import vis.backend.demo.stock.repository.StockPricesCompositeIdxRepository;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class StockInsertService {
 
@@ -33,8 +36,10 @@ public class StockInsertService {
     public void fetchAndInsert(String range) {
         List<StockInfo> stockInfos = stockInfoRepository.findAll();
         List<StockPricesCompositeIdx> allEntities = new ArrayList<>();
+        StopWatch stopWatch = new StopWatch();
 
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            stopWatch.start("fetch");
             List<Callable<List<StockPricesCompositeIdx>>> tasks = stockInfos.stream()
                     .map(info -> (Callable<List<StockPricesCompositeIdx>>) () -> {
                         List<StockDto.StockPricesSimpleDto> dtos = fetcher.fetch(info.getTicker(), range);
@@ -56,10 +61,15 @@ public class StockInsertService {
                     Thread.currentThread().interrupt();
                 }
             }
+            stopWatch.stop();
 
+            stopWatch.start("insert");
             if (!allEntities.isEmpty()) {
                 stockBatchInserter.batchInsertIgnore(allEntities);
             }
+            stopWatch.stop();
+            log.info("실행 시간(ms): " + stopWatch.prettyPrint());
+
 
         } catch (Exception e) {
             throw new RuntimeException("Error during virtual thread execution or batch insert", e);
