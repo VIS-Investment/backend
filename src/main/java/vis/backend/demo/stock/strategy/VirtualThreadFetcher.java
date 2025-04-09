@@ -1,4 +1,4 @@
-package vis.backend.demo.stock.api;
+package vis.backend.demo.stock.strategy;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -23,7 +23,7 @@ import vis.backend.demo.stock.dto.StockDto;
 
 @Slf4j
 @Component
-public class StockFetcher {
+public class VirtualThreadFetcher {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public List<StockDto.StockPricesSimpleDto> fetch(String ticker, String range) {
@@ -33,6 +33,7 @@ public class StockFetcher {
                 .queryParam("range", range)
                 .build()
                 .toUri();
+        System.out.println(uri);
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
@@ -124,7 +125,7 @@ public class StockFetcher {
                         .lowPrice(BigDecimal.valueOf(lows.get(i)))
                         .volume(volumes.get(i))
                         .build());
-                log.info("[" + ticker + "] " + "[" + date + "] " + "is fetched");
+                // log.info("[" + ticker + "] " + "[" + date + "] " + "is fetched");
             }
             if (dtos.isEmpty()) {
                 log.error("[" + ticker + "] No data added to DTOs (all nulls or empty)");
