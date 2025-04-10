@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import vis.backend.demo.stock.converter.StockPricesConverter;
 import vis.backend.demo.stock.domain.StockInfo;
-import vis.backend.demo.stock.domain.StockPricesCompositeIdx;
+import vis.backend.demo.stock.domain.StockPrices;
 
 @Component("webclient")
 @RequiredArgsConstructor
@@ -16,9 +16,9 @@ public class WebClientFetchStrategy implements FetchStrategy {
     private final WebClientFetcher fetcher;
 
     @Override
-    public List<StockPricesCompositeIdx> fetch(List<StockInfo> infos, String range) {
+    public List<StockPrices> fetch(List<StockInfo> infos, String range) {
         // 비동기 호출 → 병렬 실행
-        List<CompletableFuture<List<StockPricesCompositeIdx>>> futures = infos.stream()
+        List<CompletableFuture<List<StockPrices>>> futures = infos.stream()
                 .map(info -> CompletableFuture.supplyAsync(() ->
                         fetcher.fetch(info.getTicker(), range).stream()
                                 .map(dto -> StockPricesConverter.toEntity(dto, info))

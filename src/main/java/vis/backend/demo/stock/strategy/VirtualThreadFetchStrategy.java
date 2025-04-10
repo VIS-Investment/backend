@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import vis.backend.demo.stock.converter.StockPricesConverter;
 import vis.backend.demo.stock.domain.StockInfo;
-import vis.backend.demo.stock.domain.StockPricesCompositeIdx;
+import vis.backend.demo.stock.domain.StockPrices;
 import vis.backend.demo.stock.dto.StockDto;
 
 @Component("virtual")
@@ -20,12 +20,12 @@ public class VirtualThreadFetchStrategy implements FetchStrategy {
     private final VirtualThreadFetcher fetcher;
 
     @Override
-    public List<StockPricesCompositeIdx> fetch(List<StockInfo> infos, String range) {
-        List<StockPricesCompositeIdx> results = new ArrayList<>();
+    public List<StockPrices> fetch(List<StockInfo> infos, String range) {
+        List<StockPrices> results = new ArrayList<>();
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            List<Callable<List<StockPricesCompositeIdx>>> tasks = infos.stream()
-                    .map(info -> (Callable<List<StockPricesCompositeIdx>>) () -> {
+            List<Callable<List<StockPrices>>> tasks = infos.stream()
+                    .map(info -> (Callable<List<StockPrices>>) () -> {
                         List<StockDto.StockPricesSimpleDto> dtos = fetcher.fetch(info.getTicker(), range);
                         return dtos.stream()
                                 .map(dto -> StockPricesConverter.toEntity(dto, info))
@@ -33,9 +33,9 @@ public class VirtualThreadFetchStrategy implements FetchStrategy {
                     })
                     .toList();
 
-            List<Future<List<StockPricesCompositeIdx>>> futures = executor.invokeAll(tasks);
+            List<Future<List<StockPrices>>> futures = executor.invokeAll(tasks);
 
-            for (Future<List<StockPricesCompositeIdx>> future : futures) {
+            for (Future<List<StockPrices>> future : futures) {
                 try {
                     results.addAll(future.get(10, TimeUnit.SECONDS));
                 } catch (Exception e) {
