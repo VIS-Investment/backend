@@ -19,6 +19,13 @@ server:
         secure: true
         same-site: none
 
+logging:
+  level:
+    root: error
+    vis.backend.demo.stock: info
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+
 ---
 
 # local profile
@@ -27,22 +34,23 @@ spring:
     activate:
       on-profile: local
   datasource:
-    url: ${local.db.url}
+    url: ${local.db.url}?rewriteBatchedStatements=true
     username: ${local.db.username}
     password: ${local.db.password}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      minimum-idle: 5
-      maximum-pool-size: 20
-      idle-timeout: 30000
-      pool-name: HikariPool-1
   sql:
     init:
       mode: never
   jpa:
+    show-sql: true
     properties:
       hibernate:
+        format_sql: true
+        order_inserts: true
+        order_updates: true
         use_sql_comments: true
+        jdbc:
+          batch_size: 10000
         hbm2ddl:
           auto: update
         default_batch_fetch_size: 1000
@@ -59,17 +67,16 @@ spring:
     username: ${aws.db.username}
     password: ${aws.db.password}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      minimum-idle: 5
-      maximum-pool-size: 20
-      idle-timeout: 30000
-      pool-name: HikariPool-1
   sql:
     init:
       mode: never
   jpa:
     properties:
       hibernate:
+        jdbc:
+          batch_size: 10000
+        order_inserts: true
+        order_updates: true
         use_sql_comments: true
         hbm2ddl:
           auto: update

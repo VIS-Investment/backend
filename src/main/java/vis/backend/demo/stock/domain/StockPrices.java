@@ -6,11 +6,11 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,8 +24,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Table(
         name = "stock_prices",
-        indexes = {
-                @Index(name = "idx_date_ticker_id", columnList = "trade_date, ticker_id")
+        uniqueConstraints = {
+                @jakarta.persistence.UniqueConstraint(
+                        name = "uk_ticker_trade_date",
+                        columnNames = {"ticker_id", "trade_date"}
+                )
         }
 )
 public class StockPrices {
@@ -38,7 +41,7 @@ public class StockPrices {
     private StockInfo stockInfo;
 
     @Column(nullable = false)
-    private String tradeDate;
+    private LocalDate tradeDate;
 
     private BigDecimal openPrice;
 
@@ -49,4 +52,12 @@ public class StockPrices {
     private BigDecimal lowPrice;
 
     private Long volume;
+
+    public void updatePrices(BigDecimal open, BigDecimal close, BigDecimal high, BigDecimal low, Long volume) {
+        this.openPrice = open;
+        this.closePrice = close;
+        this.highPrice = high;
+        this.lowPrice = low;
+        this.volume = volume;
+    }
 }
