@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,12 +25,19 @@ public class VirtualThreadFetchStrategy implements FetchStrategy {
         List<StockPrices> results = new ArrayList<>();
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            Semaphore semaphore = new Semaphore(1000);
+
             List<Callable<List<StockPrices>>> tasks = infos.stream()
                     .map(info -> (Callable<List<StockPrices>>) () -> {
-                        List<StockDto.StockPricesSimpleDto> dtos = fetcher.fetch(info.getTicker(), range);
-                        return dtos.stream()
-                                .map(dto -> StockPricesConverter.toEntity(dto, info))
-                                .toList();
+                        semaphore.acquire();
+                        try {
+                            List<StockDto.StockPricesSimpleDto> dtos = fetcher.fetch(info.getTicker(), range);
+                            return dtos.stream()
+                                    .map(dto -> StockPricesConverter.toEntity(dto, info))
+                                    .toList();
+                        } finally {
+                            semaphore.release();
+                        }
                     })
                     .toList();
 
