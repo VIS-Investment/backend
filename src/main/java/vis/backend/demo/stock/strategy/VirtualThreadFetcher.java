@@ -102,7 +102,7 @@ public class VirtualThreadFetcher {
             List<Long> volumes = castToLongList(quote.get("volume"));
 
             if (opens == null || closes == null || highs == null || lows == null || volumes == null) {
-                System.out.println("[" + ticker + "] One of the price lists is null");
+                System.out.println("[" + ticker + "] No data found (all nulls or empty)");
                 return List.of();
             }
 
@@ -129,7 +129,7 @@ public class VirtualThreadFetcher {
                 // log.info("[" + ticker + "] " + "[" + date + "] " + "is fetched");
             }
             if (dtos.isEmpty()) {
-                log.error("[" + ticker + "] No data added to DTOs (all nulls or empty)");
+                log.error("[" + ticker + "] No data found (all nulls or empty)");
             }
             return dtos;
 
