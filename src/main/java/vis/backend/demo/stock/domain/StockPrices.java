@@ -22,8 +22,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(name = "stock_prices")
-
+@Table(
+        name = "stock_prices",
+        uniqueConstraints = {
+                @jakarta.persistence.UniqueConstraint(
+                        name = "uk_ticker_trade_date",
+                        columnNames = {"ticker_id", "trade_date"}
+                )
+        }
+)
 public class StockPrices {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
