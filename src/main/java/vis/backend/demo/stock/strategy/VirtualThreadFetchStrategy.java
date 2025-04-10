@@ -9,6 +9,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import vis.backend.demo.global.utils.FetchRetry;
 import vis.backend.demo.stock.converter.StockPricesConverter;
 import vis.backend.demo.stock.domain.StockInfo;
 import vis.backend.demo.stock.domain.StockPrices;
@@ -19,6 +20,7 @@ import vis.backend.demo.stock.dto.StockDto;
 public class VirtualThreadFetchStrategy implements FetchStrategy {
 
     private final VirtualThreadFetcher fetcher;
+    private final FetchRetry fetchRetry;
 
     @Override
     public List<StockPrices> fetch(List<StockInfo> infos, String range) {
@@ -31,7 +33,8 @@ public class VirtualThreadFetchStrategy implements FetchStrategy {
                     .map(info -> (Callable<List<StockPrices>>) () -> {
                         semaphore.acquire();
                         try {
-                            List<StockDto.StockPricesSimpleDto> dtos = fetcher.fetch(info.getTicker(), range);
+                            List<StockDto.StockPricesSimpleDto> dtos = fetchRetry.retry(3, 2000,
+                                    () -> fetcher.fetch(info.getTicker(), range), info.getTicker());
                             return dtos.stream()
                                     .map(dto -> StockPricesConverter.toEntity(dto, info))
                                     .toList();
