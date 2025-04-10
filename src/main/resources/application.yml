@@ -34,7 +34,7 @@ spring:
     activate:
       on-profile: local
   datasource:
-    url: ${local.db.url}
+    url: ${local.db.url}?rewriteBatchedStatements=true
     username: ${local.db.username}
     password: ${local.db.password}
     driver-class-name: com.mysql.cj.jdbc.Driver
