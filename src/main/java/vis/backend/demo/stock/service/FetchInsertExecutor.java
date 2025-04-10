@@ -8,7 +8,6 @@ import org.springframework.util.StopWatch;
 import vis.backend.demo.stock.domain.StockInfo;
 import vis.backend.demo.stock.domain.StockPrices;
 import vis.backend.demo.stock.repository.StockInfoRepository;
-import vis.backend.demo.stock.repository.StockPricesCompositeIdxRepository;
 import vis.backend.demo.stock.strategy.FetchStrategy;
 
 @Slf4j
@@ -18,7 +17,6 @@ public class FetchInsertExecutor {
     private final StockInfoRepository stockInfoRepository;
     private final FetchStrategySelector selector;
     private final StockBatchInserter inserter;
-    private final StockPricesCompositeIdxRepository r;
 
     public void execute(String range) {
         StopWatch stopWatch = new StopWatch();
