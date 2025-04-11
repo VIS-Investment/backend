@@ -27,6 +27,7 @@ public class FetchInsertExecutor {
         stopWatch.start("fetch");
         List<StockPrices> data = strategy.fetch(stockInfos, range);
         stopWatch.stop();
+        log.info("fetch end");
 
         stopWatch.start("insert");
         inserter.batchInsertIgnore(data);

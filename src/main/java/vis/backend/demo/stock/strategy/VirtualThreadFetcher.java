@@ -102,8 +102,7 @@ public class VirtualThreadFetcher {
             List<Long> volumes = castToLongList(quote.get("volume"));
 
             if (opens == null || closes == null || highs == null || lows == null || volumes == null) {
-                System.out.println("[" + ticker + "] No data found (all nulls or empty)");
-                return List.of();
+                throw new RuntimeException("[" + ticker + "] No data found");
             }
 
             int minSize = Stream.of(opens.size(), closes.size(), highs.size(), lows.size(), volumes.size(),
@@ -126,16 +125,18 @@ public class VirtualThreadFetcher {
                         .lowPrice(BigDecimal.valueOf(lows.get(i)))
                         .volume(volumes.get(i))
                         .build());
-                // log.info("[" + ticker + "] " + "[" + date + "] " + "is fetched");
             }
             if (dtos.isEmpty()) {
-                log.error("[" + ticker + "] No data found (all nulls or empty)");
+                throw new RuntimeException("[" + ticker + "] No data found");
             }
             return dtos;
 
         } catch (Exception e) {
-            log.error("[" + ticker + "] Exception: " + e.getMessage());
-            return List.of();
+            if (e.getMessage().contains("No data found")) {
+                throw new RuntimeException(e.getMessage());
+            } else {
+                throw new RuntimeException("[" + ticker + "] " + e.getMessage());
+            }
         }
     }
 

@@ -8,6 +8,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import vis.backend.demo.global.utils.FetchRetry;
 import vis.backend.demo.stock.converter.StockPricesConverter;
@@ -15,6 +16,7 @@ import vis.backend.demo.stock.domain.StockInfo;
 import vis.backend.demo.stock.domain.StockPrices;
 import vis.backend.demo.stock.dto.StockDto;
 
+@Slf4j
 @Component("virtual")
 @RequiredArgsConstructor
 public class VirtualThreadFetchStrategy implements FetchStrategy {
@@ -50,7 +52,12 @@ public class VirtualThreadFetchStrategy implements FetchStrategy {
                 try {
                     results.addAll(future.get(10, TimeUnit.SECONDS));
                 } catch (Exception e) {
-                    System.err.println("VirtualThread task failed: " + e.getMessage());
+                    String message = e.getMessage();
+                    if (message.contains("No data found") || message.contains("404 Not Found")) {
+                        log.error(e.getMessage());
+                    } else {
+                        log.error("VirtualThread task failed: " + e.getMessage());
+                    }
                 }
             }
 
