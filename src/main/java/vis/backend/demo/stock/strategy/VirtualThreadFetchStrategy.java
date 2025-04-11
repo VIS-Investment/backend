@@ -27,6 +27,8 @@ public class VirtualThreadFetchStrategy implements FetchStrategy {
     @Override
     public List<StockPrices> fetch(List<StockInfo> infos, String range) {
         List<StockPrices> results = new ArrayList<>();
+        double failedCount = 0.0;
+        List<String> failedTickers = new ArrayList<>();
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             Semaphore semaphore = new Semaphore(1000);
@@ -48,21 +50,40 @@ public class VirtualThreadFetchStrategy implements FetchStrategy {
 
             List<Future<List<StockPrices>>> futures = executor.invokeAll(tasks);
 
-            for (Future<List<StockPrices>> future : futures) {
+            for (int i = 0; i < futures.size(); i++) {
+                StockInfo info = infos.get(i);
                 try {
-                    results.addAll(future.get(10, TimeUnit.SECONDS));
+                    results.addAll(futures.get(i).get(10, TimeUnit.SECONDS));
                 } catch (Exception e) {
                     String message = e.getMessage();
                     if (message.contains("No data found") || message.contains("404 Not Found")) {
                         log.error(e.getMessage());
                     } else {
                         log.error("VirtualThread task failed: " + e.getMessage());
+                        failedCount++;
+                        failedTickers.add(info.getTicker());
                     }
                 }
             }
 
         } catch (Exception e) {
             throw new RuntimeException("VirtualThread execution failed", e);
+        }
+
+        double total = infos.size();
+        double failRate = (failedCount / total) * 100;
+        double successRate = ((total - failedCount) / total) * 100;
+
+        log.info("VirtualThreadFetch completed. Total: {}, Failed: {} ({}%), Success: {} ({}%)",
+                (int) total,
+                (int) failedCount,
+                String.format("%.2f", failRate),
+                (int) (total - failedCount),
+                String.format("%.2f", successRate)
+        );
+
+        if (!failedTickers.isEmpty()) {
+            log.warn("Failed tickers: {}", String.join(", ", failedTickers));
         }
 
         return results;
