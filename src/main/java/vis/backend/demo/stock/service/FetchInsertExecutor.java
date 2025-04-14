@@ -19,24 +19,35 @@ public class FetchInsertExecutor {
     private final StockBatchInserter inserter;
 
     public void execute(String range) {
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
+        StopWatch totalStopWatch = new StopWatch("전체 실행");
+        StopWatch fetchStopWatch = new StopWatch("Fetch 누적");
+        StopWatch insertStopWatch = new StopWatch("Insert 누적");
+
+        totalStopWatch.start();
 
         FetchStrategy strategy = fetchStrategySelector.select(range);
         List<StockInfo> stockInfos = stockInfoRepository.findAll();
 
-        int batchSize = 2000;
+        int batchSize = 100;
         for (int i = 0; i < stockInfos.size(); i += batchSize) {
             int end = Math.min(i + batchSize, stockInfos.size());
             List<StockInfo> batch = stockInfos.subList(i, end);
 
+            fetchStopWatch.start();
             List<StockPrices> data = strategy.fetch(batch, range);
+            fetchStopWatch.stop();
+
+            insertStopWatch.start();
             inserter.batchInsertIgnore(data);
+            insertStopWatch.stop();
 
             log.info("Batch inserted: {} ~ {}", i, end);
         }
 
-        stopWatch.stop();
-        log.info("실행 시간(ms): " + stopWatch.prettyPrint());
+        totalStopWatch.stop();
+
+        log.info("\n▶ 전체 실행 시간:\n{}", totalStopWatch.prettyPrint());
+        log.info("\n▶ Fetch 시간 합계:\n{}", fetchStopWatch.prettyPrint());
+        log.info("\n▶ Insert 시간 합계:\n{}", insertStopWatch.prettyPrint());
     }
 }
