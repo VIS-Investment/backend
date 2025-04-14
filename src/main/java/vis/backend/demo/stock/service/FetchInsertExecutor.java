@@ -15,24 +15,28 @@ import vis.backend.demo.stock.strategy.FetchStrategy;
 @RequiredArgsConstructor
 public class FetchInsertExecutor {
     private final StockInfoRepository stockInfoRepository;
-    private final FetchStrategySelector selector;
+    private final FetchStrategySelector fetchStrategySelector;
     private final StockBatchInserter inserter;
 
     public void execute(String range) {
         StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
 
-        FetchStrategy strategy = selector.select(range);
+        FetchStrategy strategy = fetchStrategySelector.select(range);
         List<StockInfo> stockInfos = stockInfoRepository.findAll();
 
-        stopWatch.start("fetch");
-        List<StockPrices> data = strategy.fetch(stockInfos, range);
-        stopWatch.stop();
-        log.info("fetch end");
+        int batchSize = 2000;
+        for (int i = 0; i < stockInfos.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, stockInfos.size());
+            List<StockInfo> batch = stockInfos.subList(i, end);
 
-        stopWatch.start("insert");
-        inserter.batchInsertIgnore(data);
-        stopWatch.stop();
+            List<StockPrices> data = strategy.fetch(batch, range);
+            inserter.batchInsertIgnore(data);
 
+            log.info("Batch inserted: {} ~ {}", i, end);
+        }
+
+        stopWatch.stop();
         log.info("실행 시간(ms): " + stopWatch.prettyPrint());
     }
 }
