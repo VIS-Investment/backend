@@ -14,7 +14,6 @@ import vis.backend.demo.global.utils.FetchRetry;
 import vis.backend.demo.stock.converter.StockPricesConverter;
 import vis.backend.demo.stock.domain.StockInfo;
 import vis.backend.demo.stock.domain.StockPrices;
-import vis.backend.demo.stock.dto.StockDto;
 
 @Slf4j
 @Component("batch")
@@ -37,7 +36,7 @@ public class VirtualThreadBatchFetchStrategy implements FetchStrategy {
                     .map(info -> (Callable<List<StockPrices>>) () -> {
                         semaphore.acquire();
                         try {
-                            List<StockDto.StockPricesSimpleDto> dtos = fetchRetry.retry(3, 2000,
+                            var dtos = fetchRetry.retry(3, 2000,
                                     () -> fetcher.fetch(info.getTicker(), range), info.getTicker());
                             return dtos.stream()
                                     .map(dto -> StockPricesConverter.toEntity(dto, info))
@@ -51,20 +50,22 @@ public class VirtualThreadBatchFetchStrategy implements FetchStrategy {
             List<Future<List<StockPrices>>> futures = executor.invokeAll(tasks);
 
             for (int i = 0; i < futures.size(); i++) {
-                StockInfo info = infos.get(i); // 해당 티커 정보
+                StockInfo info = infos.get(i);
                 try {
                     results.addAll(futures.get(i).get(10, TimeUnit.SECONDS));
                 } catch (Exception e) {
                     String message = e.getMessage();
                     if (message.contains("No data found") || message.contains("404 Not Found")) {
-                        log.error(e.getMessage());
+                        log.error(message);
                     } else {
-                        log.error("VirtualThread task failed: " + e.getMessage());
+                        log.error("VirtualThread task failed: {}", message);
                         failedCount++;
                         failedTickers.add(info.getTicker());
                     }
                 }
             }
+
+            Thread.sleep(1500);
 
         } catch (Exception e) {
             throw new RuntimeException("VirtualThread execution failed", e);
