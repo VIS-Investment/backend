@@ -14,12 +14,11 @@ import vis.backend.demo.global.utils.FetchRetry;
 import vis.backend.demo.stock.converter.StockPricesConverter;
 import vis.backend.demo.stock.domain.StockInfo;
 import vis.backend.demo.stock.domain.StockPrices;
-import vis.backend.demo.stock.dto.StockDto;
 
 @Slf4j
-@Component("virtual")
+@Component("batch")
 @RequiredArgsConstructor
-public class VirtualThreadFetchStrategy implements FetchStrategy {
+public class VirtualThreadBatchFetchStrategy implements FetchStrategy {
 
     private final VirtualThreadFetcher fetcher;
     private final FetchRetry fetchRetry;
@@ -31,13 +30,13 @@ public class VirtualThreadFetchStrategy implements FetchStrategy {
         List<String> failedTickers = new ArrayList<>();
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            Semaphore semaphore = new Semaphore(1000);
+            Semaphore semaphore = new Semaphore(10);
 
             List<Callable<List<StockPrices>>> tasks = infos.stream()
                     .map(info -> (Callable<List<StockPrices>>) () -> {
                         semaphore.acquire();
                         try {
-                            List<StockDto.StockPricesSimpleDto> dtos = fetchRetry.retry(3, 2000,
+                            var dtos = fetchRetry.retry(3, 2000,
                                     () -> fetcher.fetch(info.getTicker(), range), info.getTicker());
                             return dtos.stream()
                                     .map(dto -> StockPricesConverter.toEntity(dto, info))
@@ -57,14 +56,16 @@ public class VirtualThreadFetchStrategy implements FetchStrategy {
                 } catch (Exception e) {
                     String message = e.getMessage();
                     if (message.contains("No data found") || message.contains("404 Not Found")) {
-                        log.error(e.getMessage());
+                        log.error(message);
                     } else {
-                        log.error("VirtualThread task failed: " + e.getMessage());
+                        log.error("VirtualThread task failed: {}", message);
                         failedCount++;
                         failedTickers.add(info.getTicker());
                     }
                 }
             }
+
+            Thread.sleep(1500);
 
         } catch (Exception e) {
             throw new RuntimeException("VirtualThread execution failed", e);
@@ -91,6 +92,6 @@ public class VirtualThreadFetchStrategy implements FetchStrategy {
 
     @Override
     public String getType() {
-        return "virtual";
+        return "batch";
     }
 }
