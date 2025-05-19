@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 import vis.backend.demo.stock.domain.StockInfo;
-import vis.backend.demo.stock.domain.StockPrices;
+import vis.backend.demo.stock.domain.StockPricesCompositeIdx;
 import vis.backend.demo.stock.repository.StockInfoRepository;
 import vis.backend.demo.stock.strategy.FetchStrategy;
 
@@ -28,13 +28,13 @@ public class FetchInsertExecutor {
         FetchStrategy strategy = fetchStrategySelector.select(range);
         List<StockInfo> stockInfos = stockInfoRepository.findAll();
 
-        int batchSize = 100;
+        int batchSize = strategy.getBatchSize();
         for (int i = 0; i < stockInfos.size(); i += batchSize) {
             int end = Math.min(i + batchSize, stockInfos.size());
             List<StockInfo> batch = stockInfos.subList(i, end);
 
             fetchStopWatch.start();
-            List<StockPrices> data = strategy.fetch(batch, range);
+            List<StockPricesCompositeIdx> data = strategy.fetch(batch, range);
             fetchStopWatch.stop();
 
             insertStopWatch.start();
