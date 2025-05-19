@@ -14,11 +14,12 @@ import vis.backend.demo.global.utils.FetchRetry;
 import vis.backend.demo.stock.converter.StockPricesConverter;
 import vis.backend.demo.stock.domain.StockInfo;
 import vis.backend.demo.stock.domain.StockPricesCompositeIdx;
+import vis.backend.demo.stock.dto.StockDto;
 
 @Slf4j
-@Component("batch")
+@Component("fixed")
 @RequiredArgsConstructor
-public class VirtualThreadBatchFetchStrategy implements FetchStrategy {
+public class MultiThreadFetchStrategy implements FetchStrategy {
 
     private final VirtualThreadFetcher fetcher;
     private final FetchRetry fetchRetry;
@@ -29,14 +30,15 @@ public class VirtualThreadBatchFetchStrategy implements FetchStrategy {
         double failedCount = 0.0;
         List<String> failedTickers = new ArrayList<>();
 
-        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            Semaphore semaphore = new Semaphore(10);
+        int threadPoolSize = Math.min(32, infos.size());
+        try (var executor = Executors.newFixedThreadPool(threadPoolSize)) {
+            Semaphore semaphore = new Semaphore(1000);
 
             List<Callable<List<StockPricesCompositeIdx>>> tasks = infos.stream()
                     .map(info -> (Callable<List<StockPricesCompositeIdx>>) () -> {
                         semaphore.acquire();
                         try {
-                            var dtos = fetchRetry.retry(3, 2000,
+                            List<StockDto.StockPricesSimpleDto> dtos = fetchRetry.retry(3, 2000,
                                     () -> fetcher.fetch(info.getTicker(), range), info.getTicker());
                             return dtos.stream()
                                     .map(dto -> StockPricesConverter.toEntity(dto, info))
@@ -56,26 +58,24 @@ public class VirtualThreadBatchFetchStrategy implements FetchStrategy {
                 } catch (Exception e) {
                     String message = e.getMessage();
                     if (message.contains("No data found") || message.contains("404 Not Found")) {
-                        log.error(message);
+                        log.error(e.getMessage());
                     } else {
-                        log.error("VirtualThread task failed: {}", message);
+                        log.error("FixedThread task failed: " + e.getMessage());
                         failedCount++;
                         failedTickers.add(info.getTicker());
                     }
                 }
             }
 
-            Thread.sleep(1500);
-
         } catch (Exception e) {
-            throw new RuntimeException("VirtualThread execution failed", e);
+            throw new RuntimeException("FixedThread execution failed", e);
         }
 
         double total = infos.size();
         double failRate = (failedCount / total) * 100;
         double successRate = ((total - failedCount) / total) * 100;
 
-        log.info("VirtualThreadFetch completed. Total: {}, Failed: {} ({}%), Success: {} ({}%)",
+        log.info("FixedThreadFetch completed. Total: {}, Failed: {} ({}%), Success: {} ({}%)",
                 (int) total,
                 (int) failedCount,
                 String.format("%.2f", failRate),
@@ -92,6 +92,6 @@ public class VirtualThreadBatchFetchStrategy implements FetchStrategy {
 
     @Override
     public String getType() {
-        return "batch";
+        return "fixed";
     }
 }
