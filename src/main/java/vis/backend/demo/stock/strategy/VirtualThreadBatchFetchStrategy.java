@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import vis.backend.demo.global.utils.FetchRetry;
 import vis.backend.demo.stock.converter.StockPricesConverter;
 import vis.backend.demo.stock.domain.StockInfo;
-import vis.backend.demo.stock.domain.StockPrices;
+import vis.backend.demo.stock.domain.StockPricesCompositeIdx;
 
 @Slf4j
 @Component("batch")
@@ -24,16 +24,16 @@ public class VirtualThreadBatchFetchStrategy implements FetchStrategy {
     private final FetchRetry fetchRetry;
 
     @Override
-    public List<StockPrices> fetch(List<StockInfo> infos, String range) {
-        List<StockPrices> results = new ArrayList<>();
+    public List<StockPricesCompositeIdx> fetch(List<StockInfo> infos, String range) {
+        List<StockPricesCompositeIdx> results = new ArrayList<>();
         double failedCount = 0.0;
         List<String> failedTickers = new ArrayList<>();
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             Semaphore semaphore = new Semaphore(10);
 
-            List<Callable<List<StockPrices>>> tasks = infos.stream()
-                    .map(info -> (Callable<List<StockPrices>>) () -> {
+            List<Callable<List<StockPricesCompositeIdx>>> tasks = infos.stream()
+                    .map(info -> (Callable<List<StockPricesCompositeIdx>>) () -> {
                         semaphore.acquire();
                         try {
                             var dtos = fetchRetry.retry(3, 2000,
@@ -47,7 +47,7 @@ public class VirtualThreadBatchFetchStrategy implements FetchStrategy {
                     })
                     .toList();
 
-            List<Future<List<StockPrices>>> futures = executor.invokeAll(tasks);
+            List<Future<List<StockPricesCompositeIdx>>> futures = executor.invokeAll(tasks);
 
             for (int i = 0; i < futures.size(); i++) {
                 StockInfo info = infos.get(i);
