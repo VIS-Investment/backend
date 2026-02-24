@@ -12,16 +12,18 @@ public class StockBatchInserter {
 
     private final JdbcTemplate jdbcTemplate;
 
-    /**
-     * 1만 건씩 INSERT IGNORE Batch
-     */
     public void batchInsertIgnore(List<StockPricesCompositeIdx> list) {
 
         String sql = """
-                    INSERT IGNORE INTO stock_prices_composite_idx
-                      (trade_date, ticker_id,
-                       open_price, close_price, high_price, low_price, volume)
+                    INSERT INTO stock_prices_composite_idx
+                      (trade_date, ticker_id, open_price, close_price, high_price, low_price, volume)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE
+                      open_price = VALUES(open_price),
+                      close_price = VALUES(close_price),
+                      high_price = VALUES(high_price),
+                      low_price = VALUES(low_price),
+                      volume = VALUES(volume)
                 """;
 
         jdbcTemplate.batchUpdate(sql, list, 10_000, (ps, entity) -> {
